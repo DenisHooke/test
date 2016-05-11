@@ -4,6 +4,7 @@
 
 # IDE
 .idea/
+.editorconfig
 
 # Symfony
 /web/bundles/
@@ -22,5 +23,4 @@ node_modules
 .sass-cache
 web/libs
 web/dist
-web/css
 app/dist
