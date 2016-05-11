@@ -1,0 +1,8 @@
+
+parameters:
+  browser.class: AppBundle\Service\Browser
+
+services:
+    browser:
+        class: %browser.class%
+

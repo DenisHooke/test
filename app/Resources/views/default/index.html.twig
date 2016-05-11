@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+{% block container %}
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="block block-shadow">
+                <div class="block-header">
+                    <div class="block-title border-b">
+                        Фильтр треков
+                    </div>
+                </div>
+                <div class="block-content block-content-clear">
+                    <ul class="filter">
+                        <li ng-repeat="(propertyCode, property) in app.data.filter" ng-cloak>
+                            <div class="border-b property-name">[[ propertyCode ]]</div>
+                            <ul class="border-b">
+                                <li ng-repeat="value in property"><label><input type="checkbox"
+                                                                                ng-model="app.data.filter[propertyCode]"/>[[
+                                        value[propertyCode] ]]</label></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="block block-shadow">
+                <div class="block-header">
+                    <div class="block-title border-b">
+                        Список треков
+                    </div>
+                </div>
+                <div class="block-content block-content-clear">
+                    <div class="relative">
+                        <div class="loading" ng-show="app.loading"><span class="spinner text-danger"></span></div>
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th><a>№</a></th>
+                                <th><a ng-click="app.sort.set('singer')">Исполнитель</a></th>
+                                <th><a ng-click="app.sort.set('name')">Наименование</a></th>
+                                <th><a ng-click="app.sort.set('year')">Год</a></th>
+                                <th><a ng-click="app.sort.set('genre')">Жанр</a></th>
+                                <th><a ng-click="app.sort.set('duration')">Длительность</a></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="track in app.data.tracks">
+                                <td>[[track.id]]</td>
+                                <td>[[track.singer]]</td>
+                                <td>[[track.name]]</td>
+                                <td>[[track.year]]</td>
+                                <td><span class="no-wrap">[[track.genre]]</span></td>
+                                <td class="text-center">[[ track.duration | formatDuration]]</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+
+        var settings = {
+            timeout: null,
+            page: 1,
+            itemsPerPage: {{ itemsOnPage }},
+            tracksLoaded: false,
+            httpDelay: 500,
+            routing: {
+                sortTracks: 'app_dev.php/sort/tracks',
+                loadTracks: 'app_dev.php/load/tracks',
+            }
+        };
+
+        appContainer.init(settings);
+
+
+
+    </script>
+{% endblock %}

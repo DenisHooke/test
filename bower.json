@@ -1,0 +1,19 @@
+{
+  "name": "klika",
+  "version": "0.1.0",
+  "authors": [
+    "Denis Hooke <denis.hooke@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "web/assets/vendor/**",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "^3.3.6",
+    "angular": "^1.5.5"
+  }
+}
