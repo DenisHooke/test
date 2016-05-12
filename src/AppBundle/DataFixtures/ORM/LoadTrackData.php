@@ -7,6 +7,7 @@ use AppBundle\Entity\Track;
 use Doctrine\Common\DataFixtures\FixtureInterface;
 use Doctrine\Common\Persistence\ObjectManager;
 use AppBundle\Entity\ValueObject\GenreValue;
+use Symfony\Component\VarDumper\VarDumper;
 
 class LoadTrackData implements FixtureInterface
 {
@@ -18,10 +19,10 @@ class LoadTrackData implements FixtureInterface
 
         $limit = 40;
 
-        $remoteData[GenreValue::HEAVY_METALL] = $this->getRemoteData(101, $limit); // Хэви-метал
-        $remoteData[GenreValue::RUSSIAN_ROCK] = $this->getRemoteData(73, $limit); // Русский рок
-        $remoteData[GenreValue::BLUES_ROCK] = $this->getRemoteData(79, $limit); // Блюз-рок
-        $remoteData[GenreValue::FUNK] = $this->getRemoteData(85, $limit); // Фанк
+        $remoteData[GenreValue::HEAVY_METALL] = $this->getRemoteData(GenreValue::HEAVY_METALL, $limit);
+        $remoteData[GenreValue::RUSSIAN_ROCK] = $this->getRemoteData(GenreValue::RUSSIAN_ROCK, $limit);
+        $remoteData[GenreValue::BLUES_ROCK] = $this->getRemoteData(GenreValue::BLUES_ROCK, $limit);
+        $remoteData[GenreValue::FUNK] = $this->getRemoteData(GenreValue::FUNK, $limit);
 
 
         foreach ($remoteData as $genre => $data) {
@@ -34,7 +35,7 @@ class LoadTrackData implements FixtureInterface
                     $manager->persist($track);
                 }
             }
-            
+
         }
 
         $manager->flush();
@@ -53,8 +54,10 @@ class LoadTrackData implements FixtureInterface
 
         $queryData = $kernel->getContainer()->get('browser')->request(self::REMOTE_URL, array("tag_id" => $data));
 
+
+
         $htmlDocument = new \DOMDocument();
-        @$htmlDocument->loadHTML($queryData);
+        @$htmlDocument->loadHTML('<meta http-equiv="content-type" content="text/html; charset=utf-8">' . $queryData);
 
         $xpath = new \DOMXPath($htmlDocument);
         $tableRows = $xpath->evaluate('//table[@class="table-rating"]//tr');
@@ -77,6 +80,7 @@ class LoadTrackData implements FixtureInterface
 
                     $columnsData[] = $column->textContent;
 
+
                 }
             }
 
@@ -91,11 +95,12 @@ class LoadTrackData implements FixtureInterface
     public function appendData($rowData, $genre)
     {
 
+
         if (!isset($rowData[1])) return;
+
 
         $parseName = explode('—', $rowData[1]);
         if (sizeof($parseName) != 2) return false;
-
 
         $track = new Track();
         $track

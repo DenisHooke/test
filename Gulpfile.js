@@ -6,12 +6,9 @@ var gulp = require('gulp'),
     uglify = require('gulp-uglify'),
     rigger = require('gulp-rigger'),
     cssmin = require('gulp-minify-css'),
-    sourcemaps = require('gulp-sourcemaps'),
     imagemin = require('gulp-imagemin'),
     pngquant = require('imagemin-pngquant'),
-    rimraf = require('rimraf'),
-    browserSync = require("browser-sync"),
-    reload = browserSync.reload;
+    rimraf = require('rimraf');
 
 var path = {
     build: {
@@ -35,23 +32,6 @@ var path = {
     clean: './web/assets'
 };
 
-/*var config = {
-    server: {
-        baseDir: "./web/assets"
-    },
-    proxy: "myproject.dev",
-    files: ["*.css, *.html, *.php, *.js"],
-    tunnel: true,
-    host: 'localhost',
-    port: 9000,
-};*/
-
-gulp.task('webserver', function () {
-    //browserSync(config);
-    browserSync.init({
-        proxy: "klika.dev/app_dev.php"
-    });
-});
 
 gulp.task('clean', function (cb) {
     rimraf(path.clean, cb);
@@ -61,21 +41,15 @@ gulp.task('clean', function (cb) {
 gulp.task('js:build', function () {
     gulp.src(path.src.js)
         .pipe(rigger())
-        .pipe(sourcemaps.init())
         .pipe(uglify())
-        .pipe(sourcemaps.write())
         .pipe(gulp.dest(path.build.js))
-        .pipe(reload({stream: true}));
 });
 
 gulp.task('style:build', function () {
     gulp.src(path.src.style)
-        .pipe(sourcemaps.init())
         .pipe(prefixer())
         .pipe(cssmin())
-        .pipe(sourcemaps.write())
         .pipe(gulp.dest(path.build.css))
-        .pipe(reload({stream: true}));
 });
 
 gulp.task('image:build', function () {
@@ -87,7 +61,6 @@ gulp.task('image:build', function () {
             interlaced: true
         }))
         .pipe(gulp.dest(path.build.img))
-        .pipe(reload({stream: true}));
 });
 
 gulp.task('fonts:build', function() {
@@ -119,4 +92,4 @@ gulp.task('watch', function(){
 });
 
 
-gulp.task('default', ['build', 'webserver', 'watch']);
+gulp.task('default', ['build', 'watch']);

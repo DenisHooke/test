@@ -13,10 +13,15 @@
                 <div class="block-content block-content-clear">
                     <ul class="filter">
                         <li ng-repeat="(propertyCode, property) in app.data.filter" ng-cloak>
-                            <div class="border-b property-name">[[ propertyCode ]]</div>
+                            <div class="border-b property-name">[[ property.name ]]</div>
                             <ul class="border-b">
-                                <li ng-repeat="value in property"><label><input type="checkbox"
-                                                                                ng-model="app.data.filter[propertyCode]"/>[[
+                                <li ng-repeat="value in property.values">
+                                    <label for="[[ value[propertyCode] ]]">
+                                        <input id="[[ value[propertyCode] ]]"
+                                               ng-checked="app.filter.fields[propertyCode].indexOf(value[propertyCode])> -1"
+                                               ng-click="app.filter.toggleValue(value[propertyCode], propertyCode)"
+                                               name="[[propertyCode]][]" value="[[ value[propertyCode] ]]"
+                                               type="checkbox">[[
                                         value[propertyCode] ]]</label></li>
                             </ul>
                         </li>
@@ -37,22 +42,49 @@
                         <table class="table table-hover">
                             <thead>
                             <tr>
-                                <th><a>№</a></th>
-                                <th><a ng-click="app.sort.set('singer')">Исполнитель</a></th>
-                                <th><a ng-click="app.sort.set('name')">Наименование</a></th>
-                                <th><a ng-click="app.sort.set('year')">Год</a></th>
-                                <th><a ng-click="app.sort.set('genre')">Жанр</a></th>
-                                <th><a ng-click="app.sort.set('duration')">Длительность</a></th>
+                                <th>№</th>
+                                <th><a ng-click="app.sort.set('singer')">
+                                        Исполнитель
+                                        <i ng-show="app.sort.field == 'singer'" class="fa"
+                                           ng-class="{'fa-angle-down' : app.sort.order=='asc', 'fa-angle-up' : app.sort.order=='desc' }"></i></a>
+                                </th>
+                                <th><a ng-click="app.sort.set('name')">
+                                        Наименование
+                                        <i ng-show="app.sort.field == 'name'" class="fa"
+                                           ng-class="{'fa-angle-down' : app.sort.order=='asc', 'fa-angle-up' : app.sort.order=='desc' }"></i></a>
+                                </th>
+                                </a></th>
+                                <th><a ng-click="app.sort.set('year')">
+                                        Год
+                                        <i ng-show="app.sort.field == 'year'" class="fa"
+                                           ng-class="{'fa-angle-down' : app.sort.order=='asc', 'fa-angle-up' : app.sort.order=='desc' }"></i></a>
+                                </th>
+                                </a></th>
+                                <th><a ng-click="app.sort.set('genre')">
+                                        Жанр
+                                        <i ng-show="app.sort.field == 'genre'" class="fa"
+                                           ng-class="{'fa-angle-down' : app.sort.order=='asc', 'fa-angle-up' : app.sort.order=='desc' }"></i></a>
+                                </th>
+                                </a></th>
+                                <th><a ng-click="app.sort.set('duration')">
+                                        Длительность
+                                        <i ng-show="app.sort.field == 'duration'" class="fa"
+                                           ng-class="{'fa-angle-down' : app.sort.order=='asc', 'fa-angle-up' : app.sort.order=='desc' }"></i></a>
+                                </th>
+                                </a></th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr ng-repeat="track in app.data.tracks">
-                                <td>[[track.id]]</td>
+                                <td>[[$index + 1]]</td>
                                 <td>[[track.singer]]</td>
                                 <td>[[track.name]]</td>
                                 <td>[[track.year]]</td>
                                 <td><span class="no-wrap">[[track.genre]]</span></td>
                                 <td class="text-center">[[ track.duration | formatDuration]]</td>
+                            </tr>
+                            <tr ng-show="app.data.tracks.length == 0 && app.loading == false">
+                                <td colspan="6">Ни одной записи не найдено</td>
                             </tr>
                             </tbody>
                         </table>
@@ -66,22 +98,152 @@
 
 {% block javascripts %}
     <script>
-
-        var settings = {
-            timeout: null,
-            page: 1,
-            itemsPerPage: {{ itemsOnPage }},
-            tracksLoaded: false,
-            httpDelay: 500,
-            routing: {
-                sortTracks: 'app_dev.php/sort/tracks',
-                loadTracks: 'app_dev.php/load/tracks',
-            }
-        };
-
-        appContainer.init(settings);
+        (function () {
 
 
+            var app = angular.module("app", []);
+            app.config(function ($interpolateProvider) {
+                $interpolateProvider.startSymbol('[[').endSymbol(']]');
+            });
+
+            app.controller('appController', ['$scope', '$http', '$timeout', function ($scope, $http, $timeout) {
+
+                var app = {
+                    loading: false,
+
+                    settings: {
+                        loadTimer: null,
+                        filterTimer: null,
+                        page: 1,
+                        itemsPerPage: {{ itemsOnPage }},
+                        isLoadedTracks: false,
+                        httpDelay: 500,
+                        routing: {
+                            loadTracks: 'app_dev.php/load/tracks',
+                        }
+                    },
+
+                    filter: {
+                        fields: {"genre": [], "singer": [], "year": []},
+                        toggleValue: function (value, field) {
+
+                            var selectionField = app.filter.fields[field],
+                                    idx = selectionField.indexOf(value);
+
+                            if (idx > -1) {
+                                selectionField.splice(idx, 1);
+                            }
+
+                            else {
+                                selectionField.push(value);
+                            }
+
+                            $timeout.cancel(app.settings.loadTimer);
+
+                            app.settings.filterTimer = $timeout(function () {
+                                $scope.load();
+                            }, app.settings.httpDelay * 1.5);
+
+
+                        },
+                    },
+                    sort: {
+                        field: '{{ defaultSort }}',
+                        order: '{{ defaultSortOrder }}',
+                        set: function (value) {
+                            app.sort.field = value;
+                            app.sort.order = (app.sort.order == 'asc') ? 'desc' : 'asc';
+
+                            $scope.load();
+                        },
+                    },
+                    data: {
+                        tracks: [],
+                        filter: [],
+                    }
+                };
+
+                $scope.load = function (page) {
+
+                    // Если все треки загружены
+                    if (app.settings.isLoadedTracks && page) return;
+                    var pageFlag = 0;
+
+
+                    app.loading = true;
+                    $timeout.cancel(app.settings.loadTimer);
+
+
+                    app.settings.loadTimer = $timeout(function () {
+
+                        if (page) {
+                            app.settings.page++;
+                            pageFlag = true;
+                        }
+
+                        $http
+                                .get(app.settings.routing.loadTracks, {
+                                    params: {
+                                        pageFlag: pageFlag,
+                                        page: app.settings.page,
+                                        sort: app.sort.field,
+                                        order: app.sort.order,
+                                        filter: app.filter.fields
+                                    }
+                                })
+                                .then(function (response) {
+
+                                    var data = app.data;
+
+
+                                    if (response.data.tracks.length < app.settings.itemsPerPage) {
+                                        app.settings.isLoadedTracks = true;
+                                    }
+
+                                    data.filter = response.data.filter;
+                                    data.tracks = (page)
+                                            ? data.tracks.concat(response.data.tracks)
+                                            : response.data.tracks
+                                    ;
+
+
+                                    app.loading = false;
+
+                                });
+
+                    }, app.settings.httpDelay);
+                }
+
+
+                $scope.app = app;
+            }]);
+
+            app.directive("scroll", function ($window) {
+                return function (scope, element, attrs) {
+                    angular.element($window).bind("scroll", function () {
+
+                        if (this.pageYOffset + this.outerHeight >= $(document).height() - 200) {
+
+                            scope.load(true);
+                        }
+
+                        scope.$apply();
+                    });
+                };
+            });
+
+            app.filter('formatDuration', function () {
+                return function (duration) {
+
+                    var minutes = parseInt(duration / 60, 10),
+                            seconds = duration % 60,
+                            seconds = (seconds < 10) ? "0" + seconds : seconds
+                            ;
+
+                    return minutes + ":" + seconds;
+                }
+            });
+        })();
 
     </script>
 {% endblock %}

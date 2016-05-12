@@ -21,13 +21,31 @@ class Filter
 
         $values = array();
 
-       foreach($this->fields as $filed) {
+       foreach($this->fields as $code => $filedName) {
 
-           $items = $this->repo->getGroupValues($filed);
-           $values[$filed] = $items;
+           $items = $this->repo->getGroupValues($code);
+           $values[$code] = array(
+               "name" => $filedName,
+               "values" =>  $items
+           );
        }
 
         return $values;
+    }
+
+    public function convertValue($value)
+    {
+        $value = (array)json_decode($value);
+
+        foreach($value as $fieldCode => $criteria) {
+
+            if (sizeof($value[$fieldCode]) == 0) {
+                unset($value[$fieldCode]);
+            }
+
+        }
+
+        return $value;
     }
 
 }

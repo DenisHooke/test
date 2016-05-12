@@ -8,6 +8,8 @@ imports:
 parameters:
     locale: ru
     items_on_page : 30
+    default_sort : "name"
+    default_sort_order : "asc"
 
 framework:
     #esi:             ~
